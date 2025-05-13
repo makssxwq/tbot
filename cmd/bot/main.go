@@ -12,6 +12,8 @@ import (
 	tele "gopkg.in/telebot.v4"
 )
 
+var Timer uint
+
 func main() {
 	err := godotenv.Load("../../.env")
 	if err != nil {
@@ -38,6 +40,22 @@ func main() {
 	}
 
 	bot.Setup(b)
+
+	go func() {
+		ticker := time.NewTicker(1*time.Hour)
+		for range ticker.C {
+			url, err := db.RandomLink(bot.UserID)
+			if err == nil {
+				recipient := &tele.Chat{ID:	bot.UserID}
+				_, err := b.Send(recipient, url)
+				if err != nil {
+					log.Fatal(err)
+				}
+			} else {
+				log.Println("Ошибка получения случайной ссылки:", err)
+			}
+		}
+	}()
 
 	log.Println("Бот запущен...")
 	b.Start()
